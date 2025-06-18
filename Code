@@ -1,0 +1,60 @@
+pip install faker
+
+import pandas as pd
+import numpy as np
+import random
+from faker import Faker
+import os
+
+# Step 1: Define a function to ask project details
+def get_project_info():
+    print("🛠️ Project Setup Wizard")
+    project_name = input("Enter the project name (e.g., E-Commerce, Healthcare, HR): ")
+    table_name = input("Enter the table name (e.g., customers, orders, employees): ")
+    num_rows = int(input("How many rows of sample data do you need? (e.g., 100, 1000): "))
+    custom_columns = input("Any specific columns to include? (comma separated, leave blank for default): ")
+    return project_name.strip(), table_name.strip(), num_rows, custom_columns.strip()
+
+# Step 2: Create sample data using Faker
+def generate_sample_data(project, table, num_rows, custom_columns):
+    fake = Faker()
+    data = []
+
+    # Default schema (customizable)
+    default_schema = {
+        "customer_id": lambda: fake.uuid4(),
+        "name": lambda: fake.name(),
+        "email": lambda: fake.email(),
+        "phone": lambda: fake.phone_number(),
+        "address": lambda: fake.address(),
+        "registration_date": lambda: fake.date_this_decade(),
+        "last_login": lambda: fake.date_time_this_year(),
+        "status": lambda: random.choice(["active", "inactive", "pending"]),
+        "total_spent": lambda: round(random.uniform(100, 10000), 2)
+    }
+
+    # Use default or custom schema
+    if custom_columns:
+        columns = [col.strip() for col in custom_columns.split(",")]
+    else:
+        columns = list(default_schema.keys())
+
+    for _ in range(num_rows):
+        row = {col: default_schema.get(col, lambda: fake.word())() for col in columns}
+        data.append(row)
+
+    df = pd.DataFrame(data)
+    return df
+
+# Step 3: Save to CSV
+def save_csv(df, project, table):
+    filename = f"{project}_{table}_sample_data.csv".replace(" ", "_").lower()
+    df.to_csv(filename, index=False)
+    print(f"✅ Sample data saved as '{filename}' in your current directory: {os.getcwd()}")
+    return filename
+
+# Main script
+if __name__ == "__main__":
+    project_name, table_name, row_count, columns = get_project_info()
+    sample_df = generate_sample_data(project_name, table_name, row_count, columns)
+    file_path = save_csv(sample_df, project_name, table_name)
